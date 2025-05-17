@@ -445,6 +445,10 @@
                     <i class="fas fa-cog"></i>
                     <span>Configuración</span>
                 </div>
+                <div class="nav-item">
+                    <i class="fas fa-database"></i>
+                    <span>SUPABASE</span>
+                </div>
             </div>
         </div>
         
@@ -1504,29 +1508,22 @@
         // Configuración global de Supabase
         const SUPABASE_URL = 'https://tkgqbzxnfmcklqtdspza.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRrZ3FienhuZm1ja2xxdGRzcHphIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc0MzYwMDksImV4cCI6MjA2MzAxMjAwOX0.vg7akB6EfQdg6eCzzQQhFw0q9rPF8WU3WMHlyZimNtI';
-        let supabaseClient = null;
+
+        // Inicializar Supabase inmediatamente
+        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
         let currentUser = null;
 
-        // Inicializar Supabase
+        // Función para inicializar Supabase
         async function initializeSupabase() {
             try {
-                console.log('Iniciando inicialización de Supabase...');
+                console.log('Verificando inicialización de Supabase...');
                 
-                if (typeof supabase === 'undefined') {
-                    console.error('Error: La librería de Supabase no está cargada correctamente');
+                if (!supabase) {
+                    console.error('Error: La librería de Supabase no está inicializada');
                     return false;
                 }
 
-                console.log('Librería Supabase detectada, creando cliente...');
-                
-                supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-                
-                if (!supabaseClient) {
-                    console.error('Error: No se pudo crear el cliente Supabase');
-                    return false;
-                }
-
-                console.log('Cliente Supabase creado exitosamente');
+                console.log('Supabase inicializado correctamente');
                 return true;
             } catch (error) {
                 console.error('Error detallado al inicializar Supabase:', error);
@@ -1537,11 +1534,11 @@
         // Función para iniciar sesión con GitHub
         async function iniciarSesionConGitHub() {
             try {
-                if (!supabaseClient) {
+                if (!supabase) {
                     await initializeSupabase();
                 }
 
-                const { data, error } = await supabaseClient.auth.signInWithOAuth({
+                const { data, error } = await supabase.auth.signInWithOAuth({
                     provider: 'github',
                     options: {
                         redirectTo: 'https://maurolegal.github.io/ControlV.1',
@@ -1564,11 +1561,11 @@
         // Función para verificar el estado de la sesión
         async function verificarSesion() {
             try {
-                if (!supabaseClient) {
+                if (!supabase) {
                     await initializeSupabase();
                 }
 
-                const { data: { session }, error } = await supabaseClient.auth.getSession();
+                const { data: { session }, error } = await supabase.auth.getSession();
                 
                 if (error) {
                     console.error('Error al verificar sesión:', error);
@@ -1594,7 +1591,7 @@
         // Función para cerrar sesión
         async function cerrarSesion() {
             try {
-                const { error } = await supabaseClient.auth.signOut();
+                const { error } = await supabase.auth.signOut();
                 if (error) throw error;
                 
                 currentUser = null;
@@ -1694,8 +1691,8 @@
         });
 
         // Escuchar cambios en la sesión
-        if (supabaseClient) {
-            supabaseClient.auth.onAuthStateChange((event, session) => {
+        if (supabase) {
+            supabase.auth.onAuthStateChange((event, session) => {
                 if (event === 'SIGNED_IN') {
                     currentUser = session.user;
                     actualizarUIAutenticado();
