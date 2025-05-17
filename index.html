@@ -1544,7 +1544,8 @@
                 const { data, error } = await supabaseClient.auth.signInWithOAuth({
                     provider: 'github',
                     options: {
-                        redirectTo: window.location.origin
+                        redirectTo: 'https://maurolegal.github.io/ControlV.1',
+                        scopes: 'read:user user:email'
                     }
                 });
 
