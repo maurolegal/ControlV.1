@@ -1509,8 +1509,9 @@
         const SUPABASE_URL = 'https://tkgqbzxnfmcklqtdspza.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRrZ3FienhuZm1ja2xxdGRzcHphIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc0MzYwMDksImV4cCI6MjA2MzAxMjAwOX0.vg7akB6EfQdg6eCzzQQhFw0q9rPF8WU3WMHlyZimNtI';
 
-        // Inicializar Supabase inmediatamente
-        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        // Crear el cliente Supabase
+        const { createClient } = supabase;
+        const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
         let currentUser = null;
 
         // Función para inicializar Supabase
@@ -1518,7 +1519,7 @@
             try {
                 console.log('Verificando inicialización de Supabase...');
                 
-                if (!supabase) {
+                if (!supabaseClient) {
                     console.error('Error: La librería de Supabase no está inicializada');
                     return false;
                 }
@@ -1534,11 +1535,11 @@
         // Función para iniciar sesión con GitHub
         async function iniciarSesionConGitHub() {
             try {
-                if (!supabase) {
+                if (!supabaseClient) {
                     await initializeSupabase();
                 }
 
-                const { data, error } = await supabase.auth.signInWithOAuth({
+                const { data, error } = await supabaseClient.auth.signInWithOAuth({
                     provider: 'github',
                     options: {
                         redirectTo: 'https://maurolegal.github.io/ControlV.1',
@@ -1561,11 +1562,11 @@
         // Función para verificar el estado de la sesión
         async function verificarSesion() {
             try {
-                if (!supabase) {
+                if (!supabaseClient) {
                     await initializeSupabase();
                 }
 
-                const { data: { session }, error } = await supabase.auth.getSession();
+                const { data: { session }, error } = await supabaseClient.auth.getSession();
                 
                 if (error) {
                     console.error('Error al verificar sesión:', error);
@@ -1591,7 +1592,7 @@
         // Función para cerrar sesión
         async function cerrarSesion() {
             try {
-                const { error } = await supabase.auth.signOut();
+                const { error } = await supabaseClient.auth.signOut();
                 if (error) throw error;
                 
                 currentUser = null;
@@ -1642,6 +1643,45 @@
             }
         }
 
+        // Función para manejar la navegación
+        function handleNavigation(navItem) {
+            // Remover la clase active de todos los items
+            document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+            
+            // Agregar la clase active al item clickeado
+            navItem.classList.add('active');
+            
+            // Ocultar todos los contenidos
+            const contentDivs = ['dashboard-content', 'services-content', 'master-accounts-content', 
+                               'clients-content', 'users-content', 'expirations-content', 'suberbase-content'];
+            contentDivs.forEach(id => {
+                const element = document.getElementById(id);
+                if (element) {
+                    element.style.display = 'none';
+                }
+            });
+            
+            // Mostrar el contenido correspondiente
+            const text = navItem.querySelector('span').textContent;
+            const contentMap = {
+                'Dashboard': 'dashboard-content',
+                'Servicios': 'services-content',
+                'Cuentas Maestras': 'master-accounts-content',
+                'Clientes': 'clients-content',
+                'Usuarios': 'users-content',
+                'Vencimientos': 'expirations-content',
+                'SUPABASE': 'suberbase-content'
+            };
+            
+            const contentId = contentMap[text];
+            if (contentId) {
+                const contentElement = document.getElementById(contentId);
+                if (contentElement) {
+                    contentElement.style.display = 'block';
+                }
+            }
+        }
+
         // Inicialización cuando el documento está listo
         document.addEventListener('DOMContentLoaded', async () => {
             // Inicializar Supabase y verificar sesión
@@ -1664,35 +1704,14 @@
             // Configurar navegación
             document.querySelectorAll('.nav-item').forEach(item => {
                 item.addEventListener('click', function() {
-                    document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
-                    this.classList.add('active');
-                    
-                    const contentDivs = ['dashboard-content', 'services-content', 'master-accounts-content', 
-                                       'clients-content', 'users-content', 'expirations-content', 'suberbase-content'];
-                    contentDivs.forEach(id => document.getElementById(id)?.style.setProperty('display', 'none'));
-                    
-                    const text = this.querySelector('span').textContent;
-                    const contentMap = {
-                        'Dashboard': 'dashboard-content',
-                        'Servicios': 'services-content',
-                        'Cuentas Maestras': 'master-accounts-content',
-                        'Clientes': 'clients-content',
-                        'Usuarios': 'users-content',
-                        'Vencimientos': 'expirations-content',
-                        'SUBERBASE': 'suberbase-content'
-                    };
-                    
-                    const contentId = contentMap[text];
-                    if (contentId) {
-                        document.getElementById(contentId)?.style.setProperty('display', 'block');
-                    }
+                    handleNavigation(this);
                 });
             });
         });
 
         // Escuchar cambios en la sesión
-        if (supabase) {
-            supabase.auth.onAuthStateChange((event, session) => {
+        if (supabaseClient) {
+            supabaseClient.auth.onAuthStateChange((event, session) => {
                 if (event === 'SIGNED_IN') {
                     currentUser = session.user;
                     actualizarUIAutenticado();
