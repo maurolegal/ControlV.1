@@ -1283,15 +1283,15 @@
                 <span class="close">&times;</span>
             </div>
             
-            <div class="form-container">
+            <form class="form-container" onsubmit="handleServiceSubmit(event)">
                 <div class="form-group">
                     <label for="service-name">Nombre del Servicio</label>
-                    <input type="text" id="service-name" placeholder="Ej: Netflix, Disney+, etc.">
+                    <input type="text" id="service-name" placeholder="Ej: Netflix, Disney+, etc." required>
                 </div>
                 
                 <div class="form-group">
                     <label for="max-screens">Máximo de Pantallas</label>
-                    <select id="max-screens">
+                    <select id="max-screens" required>
                         <option value="1">1 Pantalla</option>
                         <option value="2">2 Pantallas</option>
                         <option value="3">3 Pantallas</option>
@@ -1304,31 +1304,31 @@
                 
                 <div class="form-group">
                     <label for="price-1">1 Pantalla</label>
-                    <input type="number" id="price-1" placeholder="Precio">
+                    <input type="number" id="price-1" placeholder="Precio" required min="0" step="0.01">
                 </div>
                 
                 <div class="form-group">
                     <label for="price-2">2 Pantallas</label>
-                    <input type="number" id="price-2" placeholder="Precio">
+                    <input type="number" id="price-2" placeholder="Precio" required min="0" step="0.01">
                 </div>
                 
                 <div class="form-group">
                     <label for="price-3">3 Pantallas</label>
-                    <input type="number" id="price-3" placeholder="Precio">
+                    <input type="number" id="price-3" placeholder="Precio" required min="0" step="0.01">
                 </div>
                 
                 <div class="form-group">
                     <label for="price-4">4 Pantallas</label>
-                    <input type="number" id="price-4" placeholder="Precio">
+                    <input type="number" id="price-4" placeholder="Precio" required min="0" step="0.01">
                 </div>
                 
                 <div class="form-group">
                     <label for="price-5">5 Pantallas</label>
-                    <input type="number" id="price-5" placeholder="Precio">
+                    <input type="number" id="price-5" placeholder="Precio" required min="0" step="0.01">
                 </div>
                 
-                <button class="btn btn-primary" style="width: 100%;">Guardar Servicio</button>
-            </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%;">Guardar Servicio</button>
+            </form>
         </div>
     </div>
     
@@ -1508,6 +1508,55 @@
         // Configuración global de Supabase
         const SUPABASE_URL = 'https://tkgqbzxnfmcklqtdspza.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRrZ3FienhuZm1ja2xxdGRzcHphIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc0MzYwMDksImV4cCI6MjA2MzAxMjAwOX0.vg7akB6EfQdg6eCzzQQhFw0q9rPF8WU3WMHlyZimNtI';
+
+        // Función para mostrar un modal
+        function showModal(modalId) {
+            const modal = document.getElementById(modalId);
+            if (modal) {
+                modal.classList.add('active');
+            }
+        }
+
+        // Función para ocultar un modal
+        function hideModal(modalId) {
+            const modal = document.getElementById(modalId);
+            if (modal) {
+                modal.classList.remove('active');
+            }
+        }
+
+        // Función para manejar el envío del formulario de servicio
+        async function handleServiceSubmit(event) {
+            event.preventDefault();
+            const formData = {
+                name: document.getElementById('service-name').value,
+                maxScreens: document.getElementById('max-screens').value,
+                prices: {
+                    1: document.getElementById('price-1').value,
+                    2: document.getElementById('price-2').value,
+                    3: document.getElementById('price-3').value,
+                    4: document.getElementById('price-4').value,
+                    5: document.getElementById('price-5').value
+                }
+            };
+
+            try {
+                // Aquí iría la lógica para guardar en Supabase
+                const { data, error } = await supabaseClient
+                    .from('services')
+                    .insert([formData]);
+
+                if (error) throw error;
+
+                alert('Servicio agregado exitosamente');
+                hideModal('add-service-modal');
+                // Recargar la tabla de servicios
+                location.reload();
+            } catch (error) {
+                console.error('Error al guardar el servicio:', error);
+                alert('Error al guardar el servicio. Por favor, intente nuevamente.');
+            }
+        }
 
         // Función para alternar la visibilidad de la contraseña
         function togglePassword(button) {
@@ -1713,11 +1762,25 @@
                 githubLoginBtn.addEventListener('click', iniciarSesionConGitHub);
             }
 
-            // Configurar cierre del modal
-            const closeButtons = document.querySelectorAll('.modal .close');
-            closeButtons.forEach(button => {
+            // Configurar botones de agregar
+            const addServiceBtn = document.getElementById('add-service-btn');
+            if (addServiceBtn) {
+                addServiceBtn.addEventListener('click', () => showModal('add-service-modal'));
+            }
+
+            // Configurar formulario de servicio
+            const addServiceForm = document.querySelector('#add-service-modal .form-container');
+            if (addServiceForm) {
+                addServiceForm.addEventListener('submit', handleServiceSubmit);
+            }
+
+            // Configurar cierre de modales
+            document.querySelectorAll('.modal .close').forEach(button => {
                 button.addEventListener('click', function() {
-                    this.closest('.modal').classList.remove('active');
+                    const modal = this.closest('.modal');
+                    if (modal) {
+                        modal.classList.remove('active');
+                    }
                 });
             });
 
@@ -1725,6 +1788,15 @@
             document.querySelectorAll('.nav-item').forEach(item => {
                 item.addEventListener('click', function() {
                     handleNavigation(this);
+                });
+            });
+
+            // Cerrar modales al hacer clic fuera
+            document.querySelectorAll('.modal').forEach(modal => {
+                modal.addEventListener('click', function(event) {
+                    if (event.target === this) {
+                        this.classList.remove('active');
+                    }
                 });
             });
         });
