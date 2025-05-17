@@ -1509,6 +1509,26 @@
         const SUPABASE_URL = 'https://tkgqbzxnfmcklqtdspza.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRrZ3FienhuZm1ja2xxdGRzcHphIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc0MzYwMDksImV4cCI6MjA2MzAxMjAwOX0.vg7akB6EfQdg6eCzzQQhFw0q9rPF8WU3WMHlyZimNtI';
 
+        // Función para alternar la visibilidad de la contraseña
+        function togglePassword(button) {
+            const cell = button.parentElement;
+            const hiddenSpan = cell.querySelector('.hidden-password');
+            const showSpan = cell.querySelector('.show-password');
+            const icon = button.querySelector('i');
+
+            if (hiddenSpan.style.display !== 'none') {
+                hiddenSpan.style.display = 'none';
+                showSpan.style.display = 'inline';
+                icon.classList.remove('fa-eye');
+                icon.classList.add('fa-eye-slash');
+            } else {
+                hiddenSpan.style.display = 'inline';
+                showSpan.style.display = 'none';
+                icon.classList.remove('fa-eye-slash');
+                icon.classList.add('fa-eye');
+            }
+        }
+
         // Crear el cliente Supabase
         const { createClient } = supabase;
         const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
